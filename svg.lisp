@@ -17,10 +17,10 @@
   "Helper macro to make convert-to-points much more readable. Basically wraps
   around reading values from a string in a plist and binding the result to a
   variable:
-  
+
     (with-plist-string-reads my-plist ((x :x) (y :y))
       (+ x y))
-  
+
   Expands to:
 
     (let ((x (read-from-string (getf my-plist :x)))
@@ -40,11 +40,15 @@
   as ellipses and circles."
   (case (intern (string-upcase (getf obj :type)) :cl-svg-polygon)
     (rect
-      (with-plist-string-reads obj ((x :x) (y :y) (w :width) (h :height)) 
+      (with-plist-string-reads obj ((x :x) (y :y) (w :width) (h :height))
         (list :points (list (vector (list x y)
                                     (list (+ x w) y)
                                     (list (+ x w) (+ y h))
                                     (list x (+ y h)))))))
+    (line
+     (with-plist-string-reads obj ((x1 :x1) (y1 :y1) (x2 :x2) (y2 :y2))
+       (list :points (list (vector (list x1 y1)
+                                   (list x2 y2))))))
     (polygon
       (let* ((pairs (split-sequence:split-sequence #\space (getf obj :points)))
              (points (loop for pair in pairs
@@ -55,7 +59,7 @@
       (multiple-value-bind (parts disconnected)
           (get-points-from-path (getf obj :d) :curve-resolution curve-resolution)
         (list :points parts :meta (list :disconnected disconnected))))
-    (ellipse 
+    (ellipse
       (with-plist-string-reads obj ((x :cx) (y :cy) (rx :rx) (ry :ry))
         (list :points (list (get-points-from-ellipse x y rx ry :curve-resolution curve-resolution)))))
     (circle
@@ -87,7 +91,7 @@
        transformations.
     2. A list of plist objects describing ALL the groups found, each storing its
        group id (created if not explicit) and any transformations that group has.
-  
+
   The idea is that given this data, we can easily generate polygons for each
   object and then apply transformations to it starting with its top-level group
   and working down to the object's transformations itself."
@@ -114,6 +118,7 @@
                    (tagsym (intern (string-upcase tag) :cl-svg-polygon))
                    (attrs (append (case tagsym
                                     (rect (list "x" "y" "width" "height"))
+                                    (line (list "x1" "y1" "x2" "y2"))
                                     (polygon (list "points"))
                                     (path (list "d"))
                                     (ellipse (list "cx" "cy" "rx" "ry"))
@@ -163,9 +168,7 @@
 
 (defun parse-svg-file (filename &key (curve-resolution 10) scale save-attributes (group-id-attribute-name "id"))
   "Simple wrapper around parse-svg-string.
-  
+
   SVG object curve resolutions can be set via :curve-resolution (the higher the
   value, the more accurate curves are)."
   (parse-svg-string (file-contents filename) :curve-resolution curve-resolution :scale scale :save-attributes save-attributes :group-id-attribute-name group-id-attribute-name))
-
-
