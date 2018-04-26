@@ -83,7 +83,9 @@
         (return)))
     val))
 
-(defun parse-svg-nodes (nodes &key parent-group (next-id 0) save-attributes (group-id-attribute-name "id"))
+(defun parse-svg-nodes (nodes
+                        &key parent-group (next-id 0)
+                          save-attributes (group-id-attribute-name "id"))
   "Given an SVG doc read via xmls:parse, return two things:
 
     1. A list of plist objects describing ALL the objects found in the SVG file.
@@ -106,13 +108,17 @@
                    (full-gid (if parent-group
                                  (append parent-group gid)
                                  gid)))
-              (multiple-value-bind (sub-nodes sub-groups) (parse-svg-nodes node
-                                                                           :parent-group full-gid
-                                                                           :next-id next-id
-                                                                           :save-attributes save-attributes
-                                                                           :group-id-attribute-name group-id-attribute-name)
+              (multiple-value-bind (sub-nodes sub-groups)
+                  (parse-svg-nodes node
+                                   :parent-group full-gid
+                                   :next-id next-id
+                                   :save-attributes save-attributes
+                                   :group-id-attribute-name group-id-attribute-name)
                 (setf objs (append sub-nodes objs))
-                (push (list :group gid :transform (parse-transform (get-node-attr node "transform")) :groups sub-groups) groups)))
+                (push (list :group gid
+                            :transform (parse-transform (get-node-attr node "transform"))
+                            :groups sub-groups)
+                      groups)))
             (let* ((gid parent-group)
                    (obj (list :type tag :group gid))
                    (tagsym (intern (string-upcase tag) :cl-svg-polygon))
@@ -126,7 +132,11 @@
                                     (t nil))
                                   save-attributes)))
               (when attrs
-                (push (append obj (loop for attr in (append attrs (list "transform" "fill" "style" "opacity"))
+                (push (append obj (loop for attr in (append attrs (list "transform"
+                                                                        "fill"
+                                                                        "stroke-dasharray"
+                                                                        "style"
+                                                                        "opacity"))
                                         for val = (get-node-attr node attr)
                                         for parsed = (if (and val (equal attr "transform")) (parse-transform val) val)
                                         if parsed append (list (read-from-string (format nil ":~a" attr)) parsed)))
