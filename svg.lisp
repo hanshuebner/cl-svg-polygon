@@ -160,22 +160,28 @@
 
   SVG object curve resolutions can be set via :curve-resolution (the higher the
   value, the more accurate curves are)."
-  (multiple-value-bind (nodes groups)
-      (parse-svg-nodes (xmls:parse svg-str) :save-attributes save-attributes :group-id-attribute-name group-id-attribute-name)
-    (remove-if
-      'null
-      (mapcar (lambda (node)
-                (handler-case
-                  (let* ((points-and-meta (convert-to-points node :curve-resolution curve-resolution))
-                         (points-and-holes (getf points-and-meta :points))
-                         (points (apply-transformations (car points-and-holes) node groups :scale scale))
-                         (holes nil))
-                    (dolist (hole (cdr points-and-holes))
-                      (push (coerce (apply-transformations hole node groups :scale scale) 'vector) holes))
-                    (append node (list :point-data (coerce points 'vector) :holes holes :meta (getf points-and-meta :meta))))
-                  (not-an-object ()
-                    nil)))
-              nodes))))
+  (let ((root (xmls:parse svg-str)))
+    (multiple-value-bind (nodes groups)
+        (parse-svg-nodes root :save-attributes save-attributes :group-id-attribute-name group-id-attribute-name)
+      (values
+       (remove-if
+        'null
+        (mapcar (lambda (node)
+                  (handler-case
+                      (let* ((points-and-meta (convert-to-points node :curve-resolution curve-resolution))
+                             (points-and-holes (getf points-and-meta :points))
+                             (points (apply-transformations (car points-and-holes) node groups :scale scale))
+                             (holes nil))
+                        (dolist (hole (cdr points-and-holes))
+                          (push (coerce (apply-transformations hole node groups :scale scale) 'vector) holes))
+                        (append node (list :point-data (coerce points 'vector) :holes holes :meta (getf points-and-meta :meta))))
+                    (not-an-object ()
+                      nil)))
+                nodes))
+       (flet ((attribs-into-keyword (attrib)
+                (list (alexandria:make-keyword (uiop:standard-case-symbol-name (first attrib)))
+                      (second attrib))))
+         (reduce #'append (mapcar #'attribs-into-keyword (second root))))))))
 
 (defun parse-svg-file (filename &key (curve-resolution 10) scale save-attributes (group-id-attribute-name "id"))
   "Simple wrapper around parse-svg-string.
