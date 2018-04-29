@@ -134,6 +134,7 @@
               (when attrs
                 (push (append obj (loop for attr in (append attrs (list "transform"
                                                                         "fill"
+                                                                        "stroke"
                                                                         "stroke-dasharray"
                                                                         "style"
                                                                         "opacity"))
