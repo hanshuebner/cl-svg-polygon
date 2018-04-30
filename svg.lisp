@@ -160,7 +160,7 @@
 
   SVG object curve resolutions can be set via :curve-resolution (the higher the
   value, the more accurate curves are)."
-  (let ((root (xmls:parse svg-str)))
+  (let ((root (xmls:parse-to-list svg-str)))
     (multiple-value-bind (nodes groups)
         (parse-svg-nodes root :save-attributes save-attributes :group-id-attribute-name group-id-attribute-name)
       (values
