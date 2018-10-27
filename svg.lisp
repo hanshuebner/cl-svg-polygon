@@ -137,7 +137,9 @@
                                                                         "stroke"
                                                                         "stroke-dasharray"
                                                                         "style"
-                                                                        "opacity"))
+                                                                        "id"
+                                                                        "opacity"
+                                                                        "meta"))
                                         for val = (get-node-attr node attr)
                                         for parsed = (if (and val (equal attr "transform")) (parse-transform val) val)
                                         if parsed append (list (read-from-string (format nil ":~a" attr)) parsed)))
