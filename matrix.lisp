@@ -2,9 +2,9 @@
 
 (defun id-matrix (dims)
   "Return a square identity matrix with the specified "
-  (let ((array (make-array (* dims dims) :initial-element 0.0 :element-type 'single-float)))
+  (let ((array (make-array (* dims dims) :initial-element 0d0 :element-type 'double-float)))
     (dotimes (d dims)
-      (setf (aref array (* d (1+ dims))) 1.0))
+      (setf (aref array (* d (1+ dims))) 1.0d0))
     array))
 
 (defun mat* (m1 m2)
@@ -34,8 +34,8 @@
   "Generate a rotation matrix."
   (let* ((matrix (id-matrix 3))
          (angle-rad (* (mod degrees 360) (/ PI 180)))
-         (cos (coerce (cos angle-rad) 'single-float))
-         (sin (coerce (sin angle-rad) 'single-float)))
+         (cos (cos angle-rad))
+         (sin (sin angle-rad)))
     (setf (aref matrix 0) cos
           (aref matrix 1) (if reverse sin (- sin))
           (aref matrix 3) (if reverse (- sin) sin)
@@ -45,15 +45,15 @@
 (defun m-scale (x y)
   "Generate a scaling matrix."
   (let ((matrix (id-matrix 3)))
-    (setf (aref matrix 0)  (coerce x 'single-float)
-          (aref matrix 4)  (coerce y 'single-float))
+    (setf (aref matrix 0) x
+          (aref matrix 4) y)
     matrix))
   
 (defun m-translate (x y)
   "Generate a translation matrix."
   (let ((translatrix (id-matrix 3)))
-    (setf (aref translatrix 2) (coerce x 'single-float)
-          (aref translatrix 5) (coerce y 'single-float))
+    (setf (aref translatrix 2) x
+          (aref translatrix 5) y)
     translatrix))
 
 (defun m-skew (degrees &key (axis :x))
